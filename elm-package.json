@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Rhythm engine to train patterns",
-    "repository": "https://github.com/7hoenix/RhythmEngine",
+    "repository": "https://github.com/7hoenix/rhythm-engine.git",
     "license": "BSD3",
     "source-directories": [
         "."
