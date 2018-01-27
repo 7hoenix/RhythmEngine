@@ -2,129 +2,38 @@ module Main exposing (..)
 
 import Html exposing (Html, div, text)
 import Html.Events exposing (onClick)
-import Time exposing (Time, second)
+import Library
 
 
 main =
     Html.program
-        { init = init 3
+        { init = ( Library.init 3, Cmd.none )
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = Library.subscriptions
         }
-
-
-
--- MODEL
-
-
-type Status
-    = InProgress
-    | InBetween
-    | Finished
-
-
-type alias Score =
-    { correct : Int
-    , incorrect : Int
-    }
-
-
-type alias Model =
-    { status : Status
-    , countdown : Int
-    , duration : Int
-    , score : Score
-    }
-
-
-init : Int -> ( Model, Cmd Msg )
-init duration =
-    ( { status = InProgress
-      , countdown = duration
-      , duration = duration
-      , score = { correct = 0, incorrect = 0 }
-      }
-    , Cmd.none
-    )
 
 
 
 -- UPDATE
 
 
-type Msg
-    = UserInput
-    | Reset
-    | Tick Time
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Library.Msg userInput -> Library.Model -> ( Library.Model, Cmd (Library.Msg userInput) )
 update msg model =
-    case msg of
-        Reset ->
-            ( { model | countdown = model.duration, status = InProgress }, Cmd.none )
-
-        UserInput ->
-            case model.status of
-                InProgress ->
-                    ( { model | status = InBetween, score = scoreCorrect model.score }, Cmd.none )
-
-                _ ->
-                    ( model, Cmd.none )
-
-        Tick _ ->
-            if model.countdown < 0 then
-                ( { model | status = InBetween, score = scoreIncorrect model.score }, Cmd.none )
-            else
-                ( { model | countdown = model.countdown - 1 }, Cmd.none )
-
-
-scoreIncorrect : Score -> Score
-scoreIncorrect score =
-    { score | incorrect = mapScore score.incorrect increment }
-
-
-scoreCorrect : Score -> Score
-scoreCorrect score =
-    { score | correct = mapScore score.correct increment }
-
-
-mapScore : Int -> (Int -> Int) -> Int
-mapScore currentScore fn =
-    fn currentScore
-
-
-increment : Int -> Int
-increment score =
-    score + 1
-
-
-
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    case model.status of
-        InProgress ->
-            Time.every second Tick
-
-        _ ->
-            Sub.none
+    ( Library.update (\_ -> False) msg model, Cmd.none )
 
 
 
 -- VIEW
 
 
-view : Model -> Html Msg
+view : Library.Model -> Html (Library.Msg ())
 view model =
     div []
         [ div [] [ text (toString (displayCountDown model.countdown)) ]
-        , div [ onClick UserInput ] [ text "click me before the timer runs out" ]
+        , div [ onClick (Library.UserInput ()) ] [ text "click me before the timer runs out" ]
         , div [] [ text (displayResults model.score) ]
-        , div [ onClick Reset ] [ text "Reset" ]
+        , div [ onClick Library.Reset ] [ text "Reset" ]
         ]
 
 
@@ -136,6 +45,6 @@ displayCountDown countdown =
         countdown
 
 
-displayResults : Score -> String
+displayResults : Library.Score -> String
 displayResults { correct, incorrect } =
     "Correct: " ++ toString correct ++ " || " ++ "Incorrect: " ++ toString incorrect
