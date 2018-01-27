@@ -18,14 +18,24 @@ main =
 -- MODEL
 
 
+type Status
+    = InProgress
+    | Finished String
+
+
 type alias Model =
-    { countdown : Int
+    { status : Status
+    , countdown : Int
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { countdown = 3 }, Cmd.none )
+    ( { status = InProgress
+      , countdown = 3
+      }
+    , Cmd.none
+    )
 
 
 
@@ -41,10 +51,13 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UserInput ->
-            ( { model | countdown = 3 }, Cmd.none )
+            ( { model | countdown = 3, status = InProgress }, Cmd.none )
 
         Tick _ ->
-            ( { model | countdown = model.countdown - 1 }, Cmd.none )
+            if model.countdown < 0 then
+                ( { model | status = Finished "failed" }, Cmd.none )
+            else
+                ( { model | countdown = model.countdown - 1 }, Cmd.none )
 
 
 
@@ -53,7 +66,12 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Time.every second Tick
+    case model.status of
+        Finished _ ->
+            Sub.none
+
+        _ ->
+            Time.every second Tick
 
 
 
@@ -63,6 +81,13 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ div [] [ text (toString model.countdown) ]
+        [ div [] [ displayCountDown model.countdown ]
         , div [ onClick UserInput ] [ text "reset" ]
         ]
+
+
+displayCountDown countdown =
+    if countdown < 0 then
+        text (toString 0)
+    else
+        text (toString countdown)
